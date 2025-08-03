@@ -6,6 +6,9 @@ import sys
 from pyfiglet import Figlet
 
 credential = []
+total_scan = 0
+successful = 0
+failed = 0
 
 def print_banner():
     """Display a colorful ASCII art banner for the FTP Checker"""
@@ -17,7 +20,7 @@ def print_banner():
     print(Fore.CYAN + "-" * 70 + "\n")
 
 def check_ftp(host, port=21, username=None, password=None, timeout=10):
-    print(f"{Fore.LIGHTBLUE_EX}--------------------------{Style.RESET_ALL}")
+    print(f"{Fore.LIGHTBLUE_EX}----------------------------------------{Style.RESET_ALL}")
     try:
         # connect to ftp server
         with FTP(timeout=timeout) as ftp:
@@ -49,7 +52,8 @@ def check_ftp(host, port=21, username=None, password=None, timeout=10):
     except Exception as e:
         print(f"{Fore.RED}[-] Error connecting to {host}:{port} - {str(e)}{Style.RESET_ALL}")
         return False
-    print(f"{Fore.LIGHTBLUE_EX}--------------------------{Style.RESET_ALL}")
+    finally:
+        print(f"{Fore.LIGHTBLUE_EX}----------------------------------------{Style.RESET_ALL}")
 
 def read_file(path):
     try:
@@ -71,8 +75,9 @@ def read_file(path):
         print(f'{Fore.RED}[!] File not exists !{Style.RESET_ALL}')
         sys.exit(0)
 
-
 def main():
+    global successful, failed, total_scan 
+    
     print_banner()
 
     parser = argparse.ArgumentParser(description='FTP Checker Tool')
@@ -85,15 +90,18 @@ def main():
         file_path = input('[-] Enter your file path : ')
 
     read_file(file_path)
+    total_scan = len(credential)
 
     for i in credential:
-        check_ftp(host=i['host'],
-                  port=[int(i['port']) if i['port'] != '' else 21][0],
-                  username=['username'],
-                  password=['password'])
-
-
+        if check_ftp(host=i['host'],
+                  port=int(i['port']) if i['port'] else 21,
+                  username=i['username'],
+                  password=i['password']):
+            successful += 1
+        else:
+            failed += 1
     
+    print(f'Result : \n    Total scan : {total_scan}\n    {Fore.GREEN}Successful : {successful}{Style.RESET_ALL}\n    {Fore.RED}Failed  : {failed}{Style.RESET_ALL}')
 
 if __name__ == "__main__":
     main()
